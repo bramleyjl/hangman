@@ -25,7 +25,7 @@ def menu
 				print ">>No game available to continue.\n"
 				menu
 			else
-				guess
+				game_display(@incorrect_guesses)
 			end
 		when "save"
 			if @secret_word == nil
@@ -224,7 +224,7 @@ def game_display(incorrect_guesses)
 		print "The secret word was '#{@secret_word.join}'.\n"
 		print "Play again? [Y/N]"
 		answer = gets.chomp.downcase
-		self.word_chooser if answer == "y"
+		menu if answer == "y"
 		exit if answer == "n"
 	end
 end
