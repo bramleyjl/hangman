@@ -123,10 +123,10 @@ def load(savename)
 	game_display(@incorrect_guesses)
 	else
 		print "Unable to locate a save with that name. Here are current save files:\n"
-		print "(Type 'guess' to return to current game.)\n"
+		print "(Type 'help' to return to menu.)\n"
 		puts Dir.glob('../saves/*.txt').join(",\n")
 		savename = gets.chomp
-		guess if savename == "guess"
+		menu if savename == "help"
 		load(savename)
 	end
 end
