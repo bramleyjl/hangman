@@ -3,12 +3,56 @@ class Hangman
 def initialize
 	print "Welcome to Hangman! Are you ready to play? [Y/N]\n"
 	answer = gets.chomp.downcase
-	self.word_chooser if answer == "y"
+	menu if answer == "y"
 	exit if answer == "n"
 end
 
+def menu
+	print "Game Commands:\n"
+	print "'New' will begin a new game.\n"
+	print "'Continue' will continue your current game.\n"
+	print "'Save' will save your current game.\n"
+	print "'Load' will load a saved game.\n"
+	print "'Exit' will exit the program.\n"
+	print "'Help' will display game commands.\n"
+	input = gets.chomp.downcase
+	case input
+		when "new"
+			print "New game begun.\n"
+			word_chooser
+		when "continue"
+			if @secret_word == nil
+				print ">>No game available to continue.\n"
+				menu
+			else
+				guess
+			end
+		when "save"
+			if @secret_word == nil
+				print ">>No game available to save.\n"
+				menu
+			else
+				print "What would you like to call your save file? (excluding extension)\n"
+				savename = gets.chomp
+				save(savename) if savename != "guess"
+			end
+		when "load"
+			print "What is your save file called? (excluding extension)\n"
+			savename = gets.chomp
+			load(savename)
+		when "exit"
+			print "Exiting Hangman.\n"
+			exit
+		when "help"
+			menu
+		else
+			print "Command not recognized.\n"
+			menu
+		end
+end
+
 def word_chooser
-	wordlist = File.readlines "5desk.txt".strip
+	wordlist = File.readlines "../5desk.txt".strip
 	wordlist.keep_if { |word| word.length > 6 && word.length < 15}
 	@secret_word = wordlist.sample.downcase.split(//)
 	@secret_word.pop(2)
@@ -19,12 +63,11 @@ def word_chooser
 	(@secret_word.length).times do |character|
 		@word_display << " _ "
 	end
-	print @secret_word
 	guess
 end
 
 def guess
-	print "Please type your guess.\n"
+	print "Please type your guess. You can also enter 'help' to return to the menu.\n"
 	guess = gets.chomp.downcase
 	if guess =~ /[a-z]/ && guess.length == 1
 		if @word_display.include?(guess) || @wrong_letter.include?(guess)
@@ -33,6 +76,8 @@ def guess
 		else
 			analyzer(guess)
 		end
+	elsif guess == "help"
+		menu
 	elsif guess == "exit"
 		exit
 	else
@@ -55,6 +100,37 @@ def analyzer(guess)
 	end
 end
 
+def save(savename)
+	File.open("../saves/#{savename}.txt", "w") do |to_file|
+		Marshal.dump(@secret_word, to_file)
+		Marshal.dump(@word_display, to_file)
+		Marshal.dump(@wrong_letter, to_file)
+		Marshal.dump(@incorrect_guesses, to_file)
+	end
+	print "Game has been saved as '#{savename}.txt'.\n"
+	game_display(@incorrect_guesses)
+end
+
+def load(savename)
+	if File.exist?("../saves/#{savename}.txt")
+		File.open("../saves/#{savename}.txt", "r") do |from_file|
+			@secret_word = Marshal.load(from_file)
+			@word_display = Marshal.load(from_file)
+			@wrong_letter = Marshal.load(from_file)
+			@incorrect_guesses = Marshal.load(from_file)
+		end
+	print "Game file '#{savename}.txt' has been loaded.\n"
+	game_display(@incorrect_guesses)
+	else
+		print "Unable to locate a save with that name. Here are current save files:\n"
+		print "(Type 'guess' to return to current game.)\n"
+		puts Dir.glob('../saves/*.txt').join(",\n")
+		savename = gets.chomp
+		guess if savename == "guess"
+		load(savename)
+	end
+end
+
 def game_display(incorrect_guesses)
 	if @word_display == @secret_word
 		puts"    ___________"
@@ -67,8 +143,9 @@ def game_display(incorrect_guesses)
 		print "The secret word is '#{@secret_word.join}'.\n"
 		print "Hooray! You're free to go!\n"
 		print "Play again? [Y/N]"
+		@secret_word = nil
 		answer = gets.chomp.downcase
-		self.word_chooser if answer == "y"
+		menu if answer == "y"
 		exit if answer == "n"
 	end
 	case incorrect_guesses
